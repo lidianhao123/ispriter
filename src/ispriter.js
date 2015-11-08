@@ -7,6 +7,8 @@ var fs = require('fs'),
     PNG = require('pngjs').PNG,
     CleanCSS = require('clean-css'),
     GrowingPacker = require('./GrowingPacker'),
+    VerticalPacker = require('./VerticalPacker'),
+    HorizontalPacker = require('./HorizontalPacker'),
     BI = require('./BackgroundInterpreter'),
     nf = require('./node-file'),
     zTool = require('./ztool');
@@ -186,7 +188,15 @@ var DEFAULT_CONFIG = {
          * @optional
          * @default false
          */
-        "copyUnspriteImage": false
+        "copyUnspriteImage": false,
+
+        /**
+         * 配置图片是否垂直方向拼接，默认值为 0
+         * 0: 使用默认的bin-packing算法排序图片
+         * 1:  垂直方向拼接
+         * 2:  水平方向拼接
+        */
+        "direction": 0
     }
 };
 
@@ -852,8 +862,20 @@ function setImageWidthHeight(styleObj, imageInfo) {
      * 这里之所以用 w / h 来表示宽高, 而不是用 with / height
      * 是因为 packer 算法限定死了, 值读取传入元素的 w / h 值
      */
-    styleObj.w = mw + spriteConfig.output.margin;
-    styleObj.h = mh + spriteConfig.output.margin;
+    switch(spriteConfig.output.direction){
+        case 0:
+            styleObj.w = mw + spriteConfig.output.margin;
+            styleObj.h = mh + spriteConfig.output.margin;
+        break;
+        case 1:
+            styleObj.w = mw;
+            styleObj.h = mh + spriteConfig.output.margin;
+        break;
+        case 2:
+            styleObj.w = mw + spriteConfig.output.margin;
+            styleObj.h = mh;
+        break;
+    }
 }
 
 /**
@@ -885,7 +907,8 @@ function positionImages(styleObjList) {
         arr = [],
         existArr = [], // 保存已经合并过的图片的样式
         maxSize = spriteConfig.output.maxSingleSize,
-        packer = new GrowingPacker();
+        direction = spriteConfig.output.direction,
+        packer = !direction ? new GrowingPacker() : ( direction == 1 ? new VerticalPacker() : new HorizontalPacker());
 
     // 把已经合并了并已输出的图片先排除掉
     for (var i in styleObjList) {
