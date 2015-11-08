@@ -137,6 +137,14 @@
              * @optional
              * @default false
              */
-            "compress": false
+            "compress": false,
+            
+            /**
+             * 配置图片是否垂直方向拼接，默认值为false
+             * 0: 使用默认的bin-packing算法排序图片
+             * 1:  垂直方向拼接
+             * 2:  水平方向拼接
+            */
+            "direction": 2
         }
     }
